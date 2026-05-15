@@ -1,0 +1,34 @@
+# This stage is used when running from VS in fast mode (Default for Debug configuration)
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS base
+USER $APP_UID
+WORKDIR /app
+
+# This stage is used to build the service project
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY . .
+RUN dotnet restore "DockerTester.csproj"
+RUN dotnet build "DockerTester.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# This stage is used to publish the service project to be copied to the final stage
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "DockerTester.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+FROM base AS final
+WORKDIR /app
+
+# Switch to root to install system packages, then switch back
+USER root
+RUN set -e; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends libxml2-dev; \
+    rm -rf /var/lib/apt/lists/*
+USER $APP_UID
+
+COPY --from=publish /app/publish .
+ENV PATH=$PATH:"/app/bin/x64/Debug/net10.0/clidriver/lib:/app/bin/x64/Debug/net10.0/clidriver/lib"
+ENV LD_LIBRARY_PATH="/app/bin/x64/Debug/net10.0/clidriver/lib"
+ENTRYPOINT ["dotnet", "DockerTester.dll"]
