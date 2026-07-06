@@ -1,10 +1,10 @@
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/runtime:10.0 AS base
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
 USER $APP_UID
 WORKDIR /app
 
 # This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY . .
@@ -29,6 +29,6 @@ RUN set -e; \
 USER $APP_UID
 
 COPY --from=publish /app/publish .
-ENV PATH=$PATH:"/app/bin/x64/Debug/net10.0/clidriver/lib:/app/bin/x64/Debug/net10.0/clidriver/lib"
-ENV LD_LIBRARY_PATH="/app/bin/x64/Debug/net10.0/clidriver/lib"
+ENV PATH=$PATH:"/app/clidriver/lib"
+ENV LD_LIBRARY_PATH="/app/clidriver/lib"
 ENTRYPOINT ["dotnet", "DockerTester.dll"]
