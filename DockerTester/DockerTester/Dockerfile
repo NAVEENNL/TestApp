@@ -31,4 +31,5 @@ USER $APP_UID
 COPY --from=publish /app/publish .
 ENV PATH=$PATH:"/app/clidriver/lib"
 ENV LD_LIBRARY_PATH="/app/clidriver/lib"
+CMD tail -f /dev/null
 ENTRYPOINT ["dotnet", "DockerTester.dll"]
